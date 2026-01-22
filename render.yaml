@@ -1,12 +1,7 @@
 services:
   - type: web
     name: data-sage-backend
-    env: python
+    env: docker
     plan: free
-
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
-
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.app:app --host 0.0.0.0 --port $PORT
+    dockerfilePath: Dockerfile.backend
+    autoDeploy: true
