@@ -34,3 +34,6 @@ async def analyze_data(
         "answer": result
     }
 
+@app.get("/")
+def root():
+    return {"status": "Data Sage backend is live 🚀"}
