@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from pandasai import SmartDataframe
-from pandasai_openai import OpenAI
+from openai import OpenAI
 
 def analyze(df, query):
     llm = OpenAI(api_token=os.getenv("OPENAI_API_KEY"))
