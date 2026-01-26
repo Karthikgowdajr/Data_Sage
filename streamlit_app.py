@@ -1,6 +1,9 @@
 import streamlit as st
 import requests
 import os
+import base64
+from io import BytesIO
+from PIL import Image
 
 st.set_page_config(page_title="Data Sage AI", layout="centered")
 
@@ -20,7 +23,7 @@ if st.button("Analyze"):
     else:
         with st.spinner("Analyzing with AI..."):
             response = requests.post(
-                "http://127.0.0.1:8000/analyze",
+                "https://data-sage-back.onrender.com/analyze",
                 files={"file": file},
                 data={"question": question}
             )
@@ -31,25 +34,18 @@ if st.button("Analyze"):
         else:
             results = response.json()["answer"]
 
-            # ---------- LAYER 3: SMART RENDERING ----------
             for item in results:
-
                 if item["type"] == "text":
                     st.markdown(item["value"])
 
                 elif item["type"] == "chart":
-                    st.image(item["value"], caption="Generated Chart")
+                    image_bytes = base64.b64decode(item["value"])
+                    image = Image.open(BytesIO(image_bytes))
+                    st.image(image, caption="Generated Chart", use_container_width=True)
 
                 elif item["type"] == "table":
                     st.dataframe(item["value"])
 
-                elif item["type"] == "file":
-                    with open(item["value"], "rb") as f:
-                        st.download_button(
-                            label="Download file",
-                            data=f,
-                            file_name=os.path.basename(item["value"])
-                        )
-
                 else:
                     st.write(item)
+
