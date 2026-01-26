@@ -2,12 +2,22 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+# Install system deps (safe minimal set)
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy backend requirements only
+COPY requirements.backend.txt .
 
-COPY . .
+# Install backend dependencies
+RUN pip install --no-cache-dir -r requirements.backend.txt
 
-EXPOSE 8000
+# Copy backend code
+COPY app ./app
 
-CMD ["uvicorn", "app.app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Expose port (Render uses $PORT internally)
+EXPOSE 10000
+
+# Start FastAPI
+CMD ["uvicorn", "app.app:app", "--host", "0.0.0.0", "--port", "10000"]
