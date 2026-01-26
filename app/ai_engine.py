@@ -1,6 +1,11 @@
 import os
+import base64
 from pandasai import SmartDataframe
 from pandasai.llm.openai import OpenAI as PandasAIOpenAI
+
+def image_to_base64(path: str) -> str:
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
 
 def analyze(df, query):
     llm = PandasAIOpenAI(
@@ -23,9 +28,11 @@ def analyze(df, query):
 
     # ---------- CHART ----------
     if isinstance(result, dict) and result.get("type") == "chart":
+        chart_path = result.get("value")
+
         outputs.append({
             "type": "chart",
-            "value": result.get("value")  # path to image
+            "value": image_to_base64(chart_path)
         })
 
     # ---------- TABLE ----------
