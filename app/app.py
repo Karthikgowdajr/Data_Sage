@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 import pandas as pd
 from app.ai_engine import analyze
 
@@ -9,31 +9,61 @@ async def analyze_data(
     file: UploadFile = File(...),
     question: str = Form(...)
 ):
-    filename = file.filename.lower()
+    try:
+        filename = file.filename.lower()
 
-    # -------- FILE HANDLING --------
-    if filename.endswith(".csv"):
-        df = pd.read_csv(file.file)
+        # -------- FILE HANDLING --------
+        if filename.endswith(".csv"):
+            df = pd.read_csv(file.file)
 
-    elif filename.endswith(".xlsx") or filename.endswith(".xls"):
-        df = pd.read_excel(file.file)
+        elif filename.endswith(".xlsx") or filename.endswith(".xls"):
+            file.file.seek(0)
+            df = pd.read_excel(file.file)
 
-    elif filename.endswith(".txt"):
-        df = pd.read_csv(file.file, delimiter="\t")
+        elif filename.endswith(".txt"):
+            file.file.seek(0)
+            df = pd.read_csv(file.file, delimiter="\t")
 
-    else:
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Unsupported file type. Upload CSV, Excel, or TXT."
+            )
+
+        # Safety check
+        if df.empty:
+            raise HTTPException(
+                status_code=400,
+                detail="Uploaded file is empty."
+            )
+
+        # -------- AI ANALYSIS --------
+        result = analyze(df, question)
+
         return {
-            "error": "Unsupported file type. Please upload CSV, Excel, or TXT."
+            "question": question,
+            "answer": result
         }
 
-    # -------- AI ANALYSIS --------
-    result = analyze(df, question)
+    except Exception as e:
+        # 🔥 THIS IS THE MOST IMPORTANT PART
+        print("❌ ANALYZE ERROR:", str(e))
 
-    # -------- STANDARD RESPONSE --------
-    return {
-        "answer": result
-    }
+        raise HTTPException(
+            status_code=500,
+            detail=f"Analysis failed: {str(e)}"
+        )
+
 
 @app.get("/")
 def root():
-    return {"status": "Data Sage backend is live 🚀"}
+    return {
+        "status": "Data Sage backend is live 🚀"
+    }
+
+
+@app.get("/health")
+def health():
+    return {
+        "status": "ok"
+    }
