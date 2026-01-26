@@ -1,35 +1,38 @@
 import os
 import pandas as pd
-from pandasai import SmartDataframe
 from openai import OpenAI
 
-def analyze(df, query):
-    llm = OpenAI(api_token=os.getenv("OPENAI_API_KEY"))
-    sdf = SmartDataframe(df, config={"llm": llm})
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY")
+)
 
-    raw_result = sdf.chat(query)
+def analyze(df: pd.DataFrame, query: str):
+    preview = df.head(20).to_string()
 
-    outputs = []
+    prompt = f"""
+You are a data analyst.
 
-    # ---------- HANDLE CHART ----------
-    if isinstance(raw_result, dict) and raw_result.get("type") == "chart":
-        outputs.append({
-            "type": "chart",
-            "value": raw_result.get("value")
-        })
+Dataset preview:
+{preview}
 
-    # ---------- HANDLE TEXT ----------
-    elif isinstance(raw_result, str):
-        outputs.append({
+User question:
+{query}
+
+Answer clearly and accurately.
+"""
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are a helpful data analyst."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.2
+    )
+
+    return [
+        {
             "type": "text",
-            "value": raw_result
-        })
-
-    # ---------- FALLBACK ----------
-    else:
-        outputs.append({
-            "type": "text",
-            "value": str(raw_result)
-        })
-
-    return outputs
+            "value": response.choices[0].message.content
+        }
+    ]
