@@ -23,7 +23,7 @@ if st.button("Analyze"):
     else:
         with st.spinner("Analyzing with AI..."):
             response = requests.post(
-                "https://data-sage-back.onrender.com/analyze",
+                "https://data-sage-backendd.onrender.com/analyze",
                 files={"file": file},
                 data={"question": question}
             )
