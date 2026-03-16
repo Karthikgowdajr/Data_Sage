@@ -55,8 +55,8 @@ def analyze(df, query):
         config={
             "llm": llm,
             "save_charts": True,
-            "verbose": False
-            "enable_cache": False
+            "verbose": False,
+            "enable_cache": False,
             "custom_whitelisted_dependencies": ["pandas", "matplotlib"]
     },
     description=f"""
