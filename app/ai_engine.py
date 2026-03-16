@@ -13,26 +13,35 @@ class OpenRouterLLM(LLM):
 
     def call(self, instruction, value=None):
 
+        # Convert PandasAI prompt object to string
+        prompt = str(instruction)
+
         response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://datasage.ai",
+                "X-Title": "Data Sage"
             },
             json={
                 "model": "meta-llama/llama-3-8b-instruct",
                 "messages": [
-                    {"role": "user", "content": str(instruction)}
+                    {"role": "user", "content": prompt}
                 ]
             }
         )
+
+        # Check API response
+        if response.status_code != 200:
+            raise Exception(response.text)
 
         data = response.json()
 
         return data["choices"][0]["message"]["content"]
 
 
-def image_to_base64(path: str) -> str:
+def image_to_base64(path: str):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode("utf-8")
 
@@ -54,6 +63,7 @@ def analyze(df, query):
         result = sdf.chat(query)
 
     except Exception as e:
+        print("FULL ERROR:", e)
         error_message = str(e).lower()
 
         if "quota" in error_message or "insufficient_quota" in error_message:
