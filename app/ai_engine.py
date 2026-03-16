@@ -3,7 +3,7 @@ import base64
 from pandasai import SmartDataframe
 from pandasai.llm.openai import OpenAI as PandasAIOpenAI
 
-
+os.environ["OPENAI_API_KEY"] = os.getenv("OPENROUTER_API_KEY")
 
 def image_to_base64(path: str) -> str:
     with open(path, "rb") as f:
@@ -13,7 +13,7 @@ def image_to_base64(path: str) -> str:
 def analyze(df, query):
 
     llm = PandasAIOpenAI(
-    api_token=os.getenv("OPENAI_API_KEY"),
+    api_token=os.getenv("OPENROUTER_API_KEY"),
     model="meta-llama/llama-3-8b-instruct",
     base_url="https://openrouter.ai/api/v1"
 )
