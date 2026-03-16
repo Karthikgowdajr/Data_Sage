@@ -22,7 +22,7 @@ class OpenRouterLLM(LLM):
             json={
                 "model": "meta-llama/llama-3-8b-instruct",
                 "messages": [
-                    {"role": "user", "content": instruction}
+                    {"role": "user", "content": str(instruction)}
                 ]
             }
         )
