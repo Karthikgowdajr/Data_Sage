@@ -25,7 +25,7 @@ class OpenRouterLLM(LLM):
                 "X-Title": "Data Sage"
             },
             json={
-                "model": "meta-llama/llama-3-8b-instruct",
+                "model": "mistralai/mixtral-8x7b-instruct",
                 "messages": [
                     {"role": "user", "content": prompt}
                 ]
@@ -56,9 +56,21 @@ def analyze(df, query):
             "llm": llm,
             "save_charts": True,
             "verbose": False
-        }
-    )
+            "enable_cache": False
+            "custom_whitelisted_dependencies": ["pandas", "matplotlib"]
+    },
+    description=f"""
+    This dataset contains food recipes.
+    The dataframe has the following columns:
+    {', '.join(df.columns)}
 
+    When answering questions:
+    -Always generate valid pandas code using the dataframe variable 'df'.
+    - Use the exact column names.
+    - If searching text values, use case-insensitive matching.
+    - Return Python pandas code only.
+    """
+)
     try:
         result = sdf.chat(query)
 
