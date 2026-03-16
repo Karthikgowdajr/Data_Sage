@@ -6,6 +6,11 @@ from pandasai.llm.base import LLM
 
 
 class OpenRouterLLM(LLM):
+
+    @property
+    def type(self):
+        return "openrouter"
+
     def call(self, instruction, value=None):
 
         response = requests.post(
