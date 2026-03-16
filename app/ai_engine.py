@@ -2,6 +2,7 @@ import os
 import base64
 from pandasai import SmartDataframe
 from pandasai.llm.openai import OpenAI as PandasAIOpenAI
+from pandasai.llm import Groq
 
 
 def image_to_base64(path: str) -> str:
@@ -11,10 +12,14 @@ def image_to_base64(path: str) -> str:
 
 def analyze(df, query):
 
-    llm = PandasAIOpenAI(
-        api_token=os.getenv("OPENAI_API_KEY"),
-        model="gpt-4o-mini"
-    )
+   # llm = PandasAIOpenAI(
+   #     api_token=os.getenv("OPENAI_API_KEY"),
+   #     model="gpt-4o-mini"
+   # )
+
+    llm = Groq(api_token=os.getenv("GROQ_API_KEY"),
+          model="Llama 3.3 70B"
+         )
 
     sdf = SmartDataframe(
         df,
