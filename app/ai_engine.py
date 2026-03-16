@@ -14,7 +14,7 @@ def analyze(df, query):
 
     llm = PandasAIOpenAI(
     api_token=os.getenv("OPENROUTER_API_KEY"),
-    model="meta-llama/llama-3-8b-instruct",
+    model="openai/gpt-3.5-turbo",
     base_url="https://openrouter.ai/api/v1"
 )
 
