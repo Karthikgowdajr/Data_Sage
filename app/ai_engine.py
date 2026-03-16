@@ -13,7 +13,7 @@ def image_to_base64(path: str) -> str:
 def analyze(df, query):
 
     llm = PandasAIOpenAI(
-    api_token=os.getenv("OR_API_KEY"),
+    api_token=os.getenv("OPENAI_API_KEY"),
     model="meta-llama/llama-3-8b-instruct",
     base_url="https://openrouter.ai/api/v1"
 )
