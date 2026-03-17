@@ -1,6 +1,7 @@
 import os
 import base64
 import requests
+import re
 from pandasai import SmartDataframe
 from pandasai.llm.base import LLM
 
@@ -13,32 +14,51 @@ class OpenRouterLLM(LLM):
 
     def call(self, instruction, value=None):
 
-        # Convert PandasAI prompt object to string
-        prompt = str(instruction)
+        # 🔥 Force STRICT Python code output
+        prompt = f"""
+You are a Python data analyst.
+
+Return ONLY valid Python code.
+- No explanations
+- No markdown
+- No comments
+- Only executable code
+
+Rules:
+- Use dataframe name: df
+- Use pandas and matplotlib
+- If chart requested, 반드시 use plt.show()
+
+Task:
+{instruction}
+"""
 
         response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
                 "Content-Type": "application/json",
-                "HTTP-Referer": "https://datasage.ai",
-                "X-Title": "Data Sage"
             },
             json={
-                "model": "mistralai/mixtral-8x7b-instruct",
+                # 🔥 CHANGE MODEL (important)
+                "model": "openai/gpt-4o-mini",
                 "messages": [
                     {"role": "user", "content": prompt}
-                ]
+                ],
+                "temperature": 0
             }
         )
 
-        # Check API response
         if response.status_code != 200:
             raise Exception(response.text)
 
         data = response.json()
+        content = data["choices"][0]["message"]["content"]
 
-        return data["choices"][0]["message"]["content"]
+        # 🔥 Clean unwanted markdown if any
+        content = re.sub(r"```.*?```", "", content, flags=re.DOTALL).strip()
+
+        return content
 
 
 def image_to_base64(path: str):
@@ -58,41 +78,29 @@ def analyze(df, query):
             "verbose": False,
             "enable_cache": False,
             "custom_whitelisted_dependencies": ["pandas", "matplotlib"]
-    },
-    description=f"""
-    This dataset contains food recipes.
-    The dataframe has the following columns:
-    {', '.join(df.columns)}
+        },
+        description=f"""
+The dataframe has the following columns:
+{', '.join(df.columns)}
 
-    When answering questions:
-    -Always generate valid pandas code using the dataframe variable 'df'.
-    - Use the exact column names.
-    - If searching text values, use case-insensitive matching.
-    - Return Python pandas code only.
-    """
-)
+Rules:
+- Always generate valid pandas code using dataframe 'df'
+- Use exact column names
+- For charts:
+    - Use matplotlib
+    - Always call plt.show()
+- Return ONLY Python code
+"""
+    )
+
     try:
         result = sdf.chat(query)
 
     except Exception as e:
         print("FULL ERROR:", e)
-        error_message = str(e).lower()
-
-        if "quota" in error_message or "insufficient_quota" in error_message:
-            return [{
-                "type": "text",
-                "value": "⚠️ Data Sage AI usage limit reached. Please try again later."
-            }]
-
-        if "rate limit" in error_message or "429" in error_message:
-            return [{
-                "type": "text",
-                "value": "⚠️ Too many requests right now. Please try again in a few minutes."
-            }]
-
         return [{
             "type": "text",
-            "value": "⚠️ Something went wrong while analyzing the data."
+            "value": "⚠️ Error while analyzing data."
         }]
 
     outputs = []
