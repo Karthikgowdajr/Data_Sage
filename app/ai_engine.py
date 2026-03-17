@@ -42,7 +42,7 @@ Task:
             json={
                 # 🔥 CHANGE MODEL (important)
                 "model": "openai/gpt-4o-mini",
-                "messages": [
+                "messages":[
                     {"role": "user", "content": prompt}
                 ],
                 "temperature": 0
@@ -77,7 +77,7 @@ def analyze(df, query):
             "save_charts": True,
             "verbose": False,
             "enable_cache": False,
-            "custom_whitelisted_dependencies": ["pandas", "matplotlib"]
+            "custom_whitelisted_dependencies":["pandas", "matplotlib"]
         },
         description=f"""
 The dataframe has the following columns:
@@ -98,27 +98,36 @@ Rules:
 
     except Exception as e:
         print("FULL ERROR:", e)
-        return [{
+        return[{
             "type": "text",
             "value": "⚠️ Error while analyzing data."
         }]
 
-    outputs = []
+    outputs =[]
 
-    if isinstance(result, dict) and result.get("type") == "chart":
+    # FIX 1: Check if PandasAI returned a string file path to a saved chart
+    if isinstance(result, str) and result.endswith(('.png', '.jpg', '.jpeg')) and os.path.exists(result):
+        outputs.append({
+            "type": "chart",
+            "value": image_to_base64(result)
+        })
+
+    # Backup: Just in case older/newer PandasAI returns a dict
+    elif isinstance(result, dict) and result.get("type") == "chart":
         chart_path = result.get("value")
-
         outputs.append({
             "type": "chart",
             "value": image_to_base64(chart_path)
         })
 
+    # Check for Tables/Dataframes
     elif hasattr(result, "to_dict"):
         outputs.append({
             "type": "table",
             "value": result.to_dict()
         })
 
+    # Fallback: Normal text responses
     else:
         outputs.append({
             "type": "text",
